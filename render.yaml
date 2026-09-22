@@ -1,0 +1,26 @@
+# Configuración para desplegar en Render (https://render.com) como Blueprint.
+services:
+  - type: web
+    name: interestellar
+    runtime: node
+    # "starter" (de pago) no se apaga por inactividad y permite disco persistente.
+    # El plan "free" se duerme tras 15 min sin visitas y borra los archivos subidos.
+    plan: starter
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/estado
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATA_DIR
+        value: /var/data
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+    # Disco persistente: aquí se guardan los manuales subidos, el índice y el historial.
+    disk:
+      name: datos
+      mountPath: /var/data
+      sizeGB: 1

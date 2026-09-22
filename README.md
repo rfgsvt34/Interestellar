@@ -61,3 +61,7 @@ src/diagnose.js      diagnóstico con Claude + búsqueda web
 public/              panel del mecánico y panel de administrador
 test/                pruebas (npm test)
 ```
+
+## Publicar en Render
+
+El archivo `render.yaml` ya trae la configuración. En Render: **New → Blueprint**, elige este repositorio, escribe `ANTHROPIC_API_KEY` y `ADMIN_PASSWORD` cuando los pida y confirma. Usa el plan `starter` (no se apaga) con un disco de 1 GB montado en `/var/data` para que los manuales subidos no se pierdan.
