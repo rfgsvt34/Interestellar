@@ -14,8 +14,17 @@ const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const MAX_UPLOAD_MB = Number(process.env.MAX_UPLOAD_MB) || 50;
 
-const library = new Library(process.env.DATA_DIR || path.join(here, 'data'));
-await library.init();
+let library = new Library(process.env.DATA_DIR || path.join(here, 'data'));
+try {
+  await library.init();
+} catch (err) {
+  // Si DATA_DIR apunta a una carpeta sin permisos (p. ej. /var/data sin disco en Render),
+  // se usa la carpeta local del proyecto para que el servidor arranque igual.
+  if (!process.env.DATA_DIR || !['EACCES', 'EPERM', 'EROFS'].includes(err.code)) throw err;
+  console.warn(`⚠ No se puede escribir en ${process.env.DATA_DIR} (${err.code}). Usando ./data; los archivos se perderán al reiniciar.`);
+  library = new Library(path.join(here, 'data'));
+  await library.init();
+}
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
