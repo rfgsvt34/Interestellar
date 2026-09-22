@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interestellar · Administrador</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Inter<span>estellar</span> · Administrador</h1>
+    <div class="spacer"></div>
+    <nav><a href="/">Panel de diagnóstico</a></nav>
+    <button id="logout" class="secondary small hidden">Cerrar sesión</button>
+  </header>
+
+  <main>
+    <form id="login" class="card" style="max-width:380px;margin:40px auto">
+      <h2>Acceso de administrador</h2>
+      <label for="password">Contraseña</label>
+      <input id="password" type="password" required autocomplete="current-password">
+      <div class="actions"><button type="submit">Entrar</button></div>
+      <div id="loginError" class="alert error hidden"></div>
+    </form>
+
+    <div id="panel" class="hidden">
+      <div class="tabs">
+        <button data-tab="biblioteca" class="active">Biblioteca</button>
+        <button data-tab="probar">Probar búsqueda</button>
+        <button data-tab="consultas">Consultas</button>
+      </div>
+
+      <section data-panel="biblioteca">
+        <form id="uploadForm" class="card">
+          <h2>Subir manuales, boletines o notas</h2>
+          <div id="drop" class="drop">
+            <p><strong>Arrastra archivos aquí</strong> o
+              <label for="files" style="display:inline;color:var(--accent);cursor:pointer">elige desde tu equipo</label></p>
+            <p class="small" id="formats"></p>
+            <input id="files" type="file" multiple class="hidden">
+            <div id="fileList" class="small"></div>
+          </div>
+          <p class="muted small">Etiqueta los archivos con el vehículo al que aplican para que la búsqueda les dé prioridad. Déjalo vacío si es información general.</p>
+          <div class="grid">
+            <div><label for="titulo">Título (si subes un solo archivo)</label><input id="titulo" name="titulo" placeholder="Ej.: Manual de servicio Sentra B17"></div>
+            <div><label for="u_marca">Marca</label><input id="u_marca" name="marca" placeholder="Ej.: Nissan"></div>
+            <div><label for="u_modelo">Modelo</label><input id="u_modelo" name="modelo" placeholder="Ej.: Sentra"></div>
+            <div><label for="u_anios">Años</label><input id="u_anios" name="anios" placeholder="Ej.: 2013-2019"></div>
+            <div><label for="u_categoria">Categoría</label>
+              <select id="u_categoria" name="categoria">
+                <option value="">—</option><option>Manual de servicio</option><option>Boletín técnico (TSB)</option>
+                <option>Diagramas eléctricos</option><option>Códigos de falla</option><option>Notas del taller</option><option>Otro</option>
+              </select></div>
+          </div>
+          <div style="margin-top:12px"><label for="u_notas">Notas</label><input id="u_notas" name="notas" placeholder="Opcional"></div>
+          <div class="actions"><button type="submit" id="uploadBtn">Subir y procesar</button><span id="uploadStatus" class="small muted"></span></div>
+          <div id="uploadResult"></div>
+        </form>
+
+        <div class="card">
+          <h2>Documentos en la biblioteca <span id="docCount" class="muted"></span></h2>
+          <input id="filter" placeholder="Filtrar por título, marca o modelo…" style="margin-bottom:10px">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Documento</th><th>Vehículo</th><th>Contenido</th><th>Subido</th><th></th></tr></thead>
+            <tbody id="docs"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <section data-panel="probar" class="hidden">
+        <form id="searchForm" class="card">
+          <h2>Probar la búsqueda en la biblioteca</h2>
+          <p class="muted small">Muestra qué fragmentos encontraría el sistema (sin IA) para una consulta.</p>
+          <div class="actions" style="margin-top:0"><input id="q" placeholder="Ej.: P0301 falla de encendido cilindro 1"><button type="submit">Buscar</button></div>
+          <div id="searchResults" style="margin-top:12px"></div>
+        </form>
+      </section>
+
+      <section data-panel="consultas" class="hidden">
+        <div class="card">
+          <h2>Últimas consultas de los mecánicos</h2>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Fecha</th><th>Vehículo</th><th>Falla</th><th>Causa principal</th><th>Fuentes</th></tr></thead>
+            <tbody id="history"></tbody>
+          </table></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

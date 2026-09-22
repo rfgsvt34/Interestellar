@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interestellar · Diagnóstico</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Inter<span>estellar</span> · Diagnóstico</h1>
+    <div class="spacer"></div>
+    <span id="status" class="muted small"></span>
+    <nav><a href="admin.html">Administrador</a></nav>
+  </header>
+
+  <main>
+    <form id="form" class="card" autocomplete="off">
+      <div id="formCard">
+        <h2>1. Falla</h2>
+        <div class="grid two">
+          <div>
+            <label for="falla">Falla</label>
+            <input id="falla" name="falla" placeholder="Ej.: jaloneo al acelerar, no arranca, testigo encendido">
+          </div>
+          <div>
+            <label for="parte">Parte / sistema del vehículo</label>
+            <input id="parte" name="parte" list="partes" placeholder="Ej.: motor, transmisión, frenos ABS">
+            <datalist id="partes">
+              <option>Motor</option><option>Encendido</option><option>Inyección / combustible</option>
+              <option>Transmisión automática</option><option>Transmisión manual / embrague</option>
+              <option>Frenos / ABS</option><option>Suspensión</option><option>Dirección</option>
+              <option>Sistema eléctrico</option><option>Carga / batería / alternador</option>
+              <option>Arranque</option><option>Enfriamiento</option><option>Aire acondicionado</option>
+              <option>Escape / emisiones</option><option>Carrocería</option><option>Airbags / SRS</option>
+              <option>Sistema híbrido / eléctrico</option>
+            </datalist>
+          </div>
+        </div>
+        <div class="grid two" style="margin-top:12px">
+          <div>
+            <label for="problema">Descripción del problema</label>
+            <textarea id="problema" name="problema" placeholder="Qué pasa, cuándo pasa, desde cuándo…"></textarea>
+          </div>
+          <div>
+            <label for="codigos">Códigos de falla (DTC)</label>
+            <textarea id="codigos" name="codigos" placeholder="Ej.: P0301, P0171"></textarea>
+          </div>
+        </div>
+        <details style="margin-top:12px">
+          <summary>Más detalles (opcional)</summary>
+          <div class="grid two" style="margin-top:10px">
+            <div>
+              <label for="sintomas">Síntomas y condiciones</label>
+              <textarea id="sintomas" name="sintomas" placeholder="En frío / caliente, a qué velocidad, ruidos, olores…"></textarea>
+            </div>
+            <div>
+              <label for="pruebas">Lo que ya se revisó o cambió</label>
+              <textarea id="pruebas" name="pruebas" placeholder="Ej.: se cambiaron bujías, se midió presión de combustible 45 psi"></textarea>
+            </div>
+          </div>
+        </details>
+
+        <h2 style="margin-top:22px">2. Vehículo</h2>
+        <div class="grid">
+          <div>
+            <label for="marca">Marca <span class="req">*</span></label>
+            <input id="marca" name="marca" list="marcas" required placeholder="Ej.: Nissan">
+            <datalist id="marcas">
+              <option>Chevrolet</option><option>Nissan</option><option>Volkswagen</option><option>Toyota</option>
+              <option>Ford</option><option>Honda</option><option>Mazda</option><option>Kia</option><option>Hyundai</option>
+              <option>Renault</option><option>Chrysler</option><option>Dodge</option><option>Jeep</option><option>RAM</option>
+              <option>Mitsubishi</option><option>Suzuki</option><option>Seat</option><option>Peugeot</option>
+              <option>BMW</option><option>Mercedes-Benz</option><option>Audi</option><option>Fiat</option><option>Subaru</option>
+            </datalist>
+          </div>
+          <div>
+            <label for="modelo">Modelo <span class="req">*</span></label>
+            <input id="modelo" name="modelo" required placeholder="Ej.: Sentra">
+          </div>
+          <div>
+            <label for="anio">Año <span class="req">*</span></label>
+            <input id="anio" name="anio" required inputmode="numeric" pattern="(19|20)\d{2}" maxlength="4" placeholder="Ej.: 2016">
+          </div>
+          <div>
+            <label for="motor">Motor</label>
+            <input id="motor" name="motor" placeholder="Ej.: 1.8L MR18DE">
+          </div>
+          <div>
+            <label for="transmision">Transmisión</label>
+            <input id="transmision" name="transmision" placeholder="Ej.: CVT">
+          </div>
+          <div>
+            <label for="kilometraje">Kilometraje</label>
+            <input id="kilometraje" name="kilometraje" inputmode="numeric" placeholder="Ej.: 120000">
+          </div>
+          <div>
+            <label for="vin">VIN</label>
+            <input id="vin" name="vin" maxlength="17" placeholder="17 caracteres">
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" id="submit">Diagnosticar</button>
+          <label class="check"><input type="checkbox" id="buscarWeb" checked> Buscar también en internet</label>
+          <button type="button" class="secondary" id="clear">Limpiar</button>
+        </div>
+      </div>
+    </form>
+
+    <div id="loading" class="card hidden">
+      <div class="loading"><div class="spinner"></div>
+        <div><strong>Analizando…</strong><div class="muted small" id="loadingMsg">Buscando en los manuales del taller</div></div>
+      </div>
+    </div>
+
+    <div id="error" class="alert error hidden"></div>
+    <section id="result"></section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

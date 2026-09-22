@@ -1,1 +1,63 @@
-# Interestellar
+# Interestellar — Diagnóstico para mecánicos
+
+Aplicación web con dos paneles:
+
+- **Panel del mecánico** (`/`): se captura la falla, la parte o sistema del vehículo, la descripción del problema, los códigos de falla (DTC) y los datos del vehículo (marca, modelo, año, motor, etc.). El sistema responde con:
+  - posibles causas, ordenadas por probabilidad y con sus fuentes,
+  - dónde se ubica la pieza o el componente,
+  - pruebas para confirmar la falla,
+  - cómo arreglarlo (pasos, herramientas, dificultad y tiempo),
+  - advertencias de seguridad.
+- **Panel de administrador** (`/admin.html`, protegido con contraseña): se suben manuales de servicio, boletines técnicos (TSB), diagramas, tablas de códigos o notas del taller (PDF, DOCX, TXT, MD, CSV, JSON, HTML). Cada archivo puede etiquetarse con marca, modelo y años para que tenga prioridad en la búsqueda. También permite probar la búsqueda y ver el historial de consultas.
+
+## Cómo funciona
+
+1. El texto de cada archivo se extrae, se divide en fragmentos y se indexa (búsqueda BM25 con prioridad para códigos OBD-II y para documentos del mismo vehículo).
+2. En cada consulta se buscan los fragmentos más relevantes de la biblioteca.
+3. Esos fragmentos se envían a la IA (Claude, de Anthropic), que además **busca en internet** (boletines, recalls, foros, bases de datos de códigos) lo que no esté en los archivos. La casilla "Buscar también en internet" permite desactivarlo.
+4. La IA devuelve un diagnóstico estructurado. Cada causa indica si viene de un manual del taller (con enlace al documento y página), de internet (con la URL) o de conocimiento general.
+
+Si no hay clave de la API configurada, la aplicación sigue funcionando en modo **solo biblioteca**: muestra los fragmentos encontrados en los manuales.
+
+## Instalación
+
+Requiere Node.js 22 o superior.
+
+```bash
+npm install
+cp .env.example .env   # y edita ANTHROPIC_API_KEY y ADMIN_PASSWORD
+npm start
+```
+
+Abre `http://localhost:3000` (mecánicos) y `http://localhost:3000/admin.html` (administrador).
+
+### Variables de entorno
+
+| Variable | Descripción |
+|---|---|
+| `ANTHROPIC_API_KEY` | Clave de la API de Anthropic ([console.anthropic.com](https://console.anthropic.com/)). Sin ella solo se busca en los manuales. |
+| `ADMIN_PASSWORD` | Contraseña del panel de administrador. Sin ella el panel queda deshabilitado. |
+| `PORT` | Puerto del servidor (por defecto 3000). |
+| `CLAUDE_MODEL` | Modelo de Claude (por defecto `claude-opus-5`). |
+| `DATA_DIR` | Carpeta donde se guardan los archivos, el índice y el historial (por defecto `./data`). |
+| `MAX_UPLOAD_MB` | Tamaño máximo por archivo (por defecto 50 MB). |
+
+## Notas
+
+- Los PDF escaneados (imágenes sin texto) todavía no se pueden leer; el panel de administrador lo avisa al subirlos. Conviene pasarlos antes por un OCR.
+- Los documentos de la biblioteca se pueden abrir desde los enlaces de las fuentes del diagnóstico sin iniciar sesión, para que el mecánico consulte la página citada.
+- La búsqueda web la hace la IA con su propia herramienta de búsqueda en internet; no depende de tener Safari o Google instalados.
+- Si el modelo principal rechaza una consulta, la API la reintenta automáticamente con el modelo de respaldo recomendado (`fallbacks: "default"`).
+- Cada consulta con IA y búsqueda web tiene un costo en la cuenta de Anthropic.
+
+## Estructura
+
+```
+server.js            API y servidor web (Express)
+src/extract.js       extracción de texto (PDF, DOCX, TXT…) y fragmentación
+src/search.js        índice de búsqueda BM25 y detección de códigos DTC
+src/store.js         biblioteca de documentos e historial en disco
+src/diagnose.js      diagnóstico con Claude + búsqueda web
+public/              panel del mecánico y panel de administrador
+test/                pruebas (npm test)
+```
