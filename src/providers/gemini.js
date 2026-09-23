@@ -5,6 +5,9 @@ import { SYSTEM_PROMPT, DIAGNOSIS_SCHEMA, buildUserMessage } from '../prompt.js'
 import { ProviderError } from './claude.js';
 
 const MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
+// Si el modelo principal está saturado, se prueba con este (más ligero).
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL ?? 'gemini-flash-lite-latest';
+const RETRY_DELAYS_MS = [2000, 5000];
 
 const JSON_INSTRUCTIONS = `
 
@@ -32,7 +35,7 @@ export async function diagnoseGemini(consulta, excerpts, { webSearch }) {
     config.responseJsonSchema = DIAGNOSIS_SCHEMA;
   }
 
-  const response = await ai.models.generateContent({ model: MODEL, contents: userMessage, config });
+  const { response, model } = await generateWithRetry(ai, { contents: userMessage, config });
   checkBlocked(response);
 
   const webResults = new Map();
@@ -41,8 +44,7 @@ export async function diagnoseGemini(consulta, excerpts, { webSearch }) {
 
   let diagnostico = parseJson(response.text);
   if (!diagnostico) {
-    const fix = await ai.models.generateContent({
-      model: MODEL,
+    const { response: fix } = await generateWithRetry(ai, {
       contents: `Convierte este diagnóstico al formato JSON indicado, sin perder información:\n\n${response.text || ''}`,
       config: { responseMimeType: 'application/json', responseJsonSchema: DIAGNOSIS_SCHEMA },
     });
@@ -54,9 +56,33 @@ export async function diagnoseGemini(consulta, excerpts, { webSearch }) {
   return {
     diagnostico,
     webResults: [...webResults].map(([url, titulo]) => ({ url, titulo })),
-    modelo: response.modelVersion || MODEL,
+    modelo: response.modelVersion || model,
   };
 }
+
+// Reintenta cuando Gemini responde "saturado" (5xx) o límite por minuto (429) y,
+// si sigue fallando, prueba con el modelo de respaldo.
+async function generateWithRetry(ai, request) {
+  const models = [MODEL, FALLBACK_MODEL].filter((m, i, all) => m && all.indexOf(m) === i);
+  let lastError;
+  for (const model of models) {
+    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+      try {
+        return { response: await ai.models.generateContent({ ...request, model }), model };
+      } catch (err) {
+        lastError = err;
+        const status = err instanceof ApiError ? err.status : 0;
+        const transient = status === 429 || status >= 500;
+        if (!transient) throw err;
+        console.warn(`Gemini ${model} respondió ${status} (intento ${attempt + 1}): ${err.message}`);
+        if (attempt < RETRY_DELAYS_MS.length) await sleep(RETRY_DELAYS_MS[attempt]);
+      }
+    }
+  }
+  throw lastError;
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function checkBlocked(response) {
   const reason = response.promptFeedback?.blockReason || response.candidates?.[0]?.finishReason;
