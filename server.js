@@ -3,11 +3,10 @@ import multer from 'multer';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import Anthropic from '@anthropic-ai/sdk';
 import { Library } from './src/store.js';
 import { isSupported, SUPPORTED_EXTENSIONS } from './src/extract.js';
 import { extractCodes } from './src/search.js';
-import { diagnose, aiEnabled, DiagnosisError } from './src/diagnose.js';
+import { diagnose, aiEnabled, aiProvider, DiagnosisError } from './src/diagnose.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3000;
@@ -76,6 +75,7 @@ app.post('/api/admin/logout', (req, res) => {
 app.get('/api/estado', (_req, res) => {
   res.json({
     ia: aiEnabled(),
+    proveedor: aiProvider(),
     documentos: library.list().length,
     fragmentos: library.index.size,
     formatos: SUPPORTED_EXTENSIONS,
@@ -145,7 +145,7 @@ app.post('/api/diagnostico', async (req, res) => {
   if (!aiEnabled()) {
     return res.json({
       modo: 'solo-biblioteca',
-      aviso: 'La IA no está configurada (falta ANTHROPIC_API_KEY). Se muestran solo los fragmentos encontrados en los manuales.',
+      aviso: 'La IA no está configurada (falta GEMINI_API_KEY o ANTHROPIC_API_KEY). Se muestran solo los fragmentos encontrados en los manuales.',
       fuentesManual,
     });
   }
@@ -169,6 +169,7 @@ app.post('/api/diagnostico', async (req, res) => {
         manualesUsados: fuentesManual.length,
         busquedaWeb: webSearch,
         modelo: result.modelo,
+        proveedor: result.proveedor,
       })
       .catch((err) => console.error('No se pudo guardar el historial:', err));
     res.json(respuesta);
@@ -176,9 +177,6 @@ app.post('/api/diagnostico', async (req, res) => {
     console.error('Error en diagnóstico:', err);
     let message = 'No se pudo completar el diagnóstico. Intenta de nuevo.';
     if (err instanceof DiagnosisError) message = err.message;
-    else if (err instanceof Anthropic.AuthenticationError) message = 'La clave de la API de Anthropic no es válida.';
-    else if (err instanceof Anthropic.RateLimitError) message = 'Demasiadas consultas seguidas. Espera un momento.';
-    else if (err instanceof Anthropic.APIConnectionError) message = 'No hay conexión con el servicio de IA.';
     res.status(502).json({ error: message, fuentesManual });
   }
 });
@@ -265,6 +263,7 @@ app.listen(PORT, () => {
   console.log(`Interestellar listo en http://localhost:${PORT}`);
   console.log(`  Panel del mecánico: http://localhost:${PORT}/`);
   console.log(`  Panel de administrador: http://localhost:${PORT}/admin.html`);
-  if (!aiEnabled()) console.warn('  ⚠ ANTHROPIC_API_KEY no configurada: solo se buscará en los manuales.');
+  if (aiEnabled()) console.log(`  IA: ${aiProvider()}`);
+  else console.warn('  ⚠ Falta GEMINI_API_KEY (o ANTHROPIC_API_KEY): solo se buscará en los manuales.');
   if (!ADMIN_PASSWORD) console.warn('  ⚠ ADMIN_PASSWORD no configurada: el panel de administrador está deshabilitado.');
 });
