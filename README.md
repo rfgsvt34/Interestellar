@@ -19,17 +19,43 @@ Aplicación web con dos paneles:
 
 Si no hay ninguna clave de IA configurada, la aplicación sigue funcionando en modo **solo biblioteca**: muestra los fragmentos encontrados en los manuales.
 
-## Instalación
+## Cómo correrlo en tu computadora (localhost)
 
-Requiere Node.js 22 o superior.
+Necesitas **Python 3.10 o superior** ([python.org/downloads](https://www.python.org/downloads/); en Windows marca la casilla *"Add Python to PATH"* al instalar).
 
-```bash
-npm install
-cp .env.example .env   # y edita GEMINI_API_KEY y ADMIN_PASSWORD
-npm start
-```
+1. Descarga el proyecto (en GitHub: **Code → Download ZIP**, y descomprímelo) o clónalo con `git clone`.
+2. Abre una terminal **dentro de la carpeta del proyecto** y crea un entorno virtual con las librerías:
 
-Abre `http://localhost:3000` (mecánicos) y `http://localhost:3000/admin.html` (administrador).
+   **Windows (PowerShell o CMD)**
+   ```bat
+   python -m venv .venv
+   .venv\Scripts\activate
+   pip install -r requirements.txt
+   copy .env.example .env
+   ```
+
+   **Mac / Linux**
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   cp .env.example .env
+   ```
+
+3. Abre el archivo `.env` con cualquier editor de texto y llena `GEMINI_API_KEY` (tu clave `AIza...`) y `ADMIN_PASSWORD`.
+4. Arranca el servidor:
+   ```bash
+   python app.py
+   ```
+5. Abre en el navegador:
+   - Panel del mecánico: **http://localhost:3000**
+   - Panel de administrador: **http://localhost:3000/admin.html**
+
+Para detenerlo, presiona `Ctrl + C` en la terminal. Las siguientes veces solo necesitas activar el entorno (paso 2, segunda línea) y correr `python app.py`.
+
+Los manuales subidos se guardan en la carpeta `data/` del proyecto; no se borran al cerrar el programa.
+
+Pruebas: `python -m unittest discover -s tests`
 
 ### Variables de entorno
 
@@ -41,6 +67,7 @@ Abre `http://localhost:3000` (mecánicos) y `http://localhost:3000/admin.html` (
 | `GEMINI_MODEL` | Modelo de Gemini (por defecto `gemini-flash-latest`). |
 | `ADMIN_PASSWORD` | Contraseña del panel de administrador. Sin ella el panel queda deshabilitado. |
 | `PORT` | Puerto del servidor (por defecto 3000). |
+| `GEMINI_FALLBACK_MODEL` | Modelo de respaldo si Gemini está saturado (por defecto `gemini-flash-lite-latest`). |
 | `CLAUDE_MODEL` | Modelo de Claude (por defecto `claude-opus-5`). |
 | `DATA_DIR` | Carpeta donde se guardan los archivos, el índice y el historial (por defecto `./data`). |
 | `MAX_UPLOAD_MB` | Tamaño máximo por archivo (por defecto 50 MB). |
@@ -57,17 +84,17 @@ Abre `http://localhost:3000` (mecánicos) y `http://localhost:3000/admin.html` (
 ## Estructura
 
 ```
-server.js            API y servidor web (Express)
-src/extract.js       extracción de texto (PDF, DOCX, TXT…) y fragmentación
-src/search.js        índice de búsqueda BM25 y detección de códigos DTC
-src/store.js         biblioteca de documentos e historial en disco
-src/diagnose.js      elige el proveedor de IA y normaliza el diagnóstico
-src/prompt.js        instrucciones y formato del diagnóstico
-src/providers/       Gemini (Google) y Claude (Anthropic)
-public/              panel del mecánico y panel de administrador
-test/                pruebas (npm test)
+app.py                         servidor web (Flask) y rutas de la API
+interestellar/extract.py       extracción de texto (PDF, DOCX, TXT…) y fragmentación
+interestellar/search.py        índice de búsqueda BM25 y detección de códigos DTC
+interestellar/store.py         biblioteca de documentos e historial en disco
+interestellar/diagnose.py      elige el proveedor de IA y normaliza el diagnóstico
+interestellar/prompt.py        instrucciones y formato del diagnóstico
+interestellar/providers/       Gemini (Google) y Claude (Anthropic)
+public/                        panel del mecánico y panel de administrador (HTML/JS/CSS)
+tests/                         pruebas
 ```
 
 ## Publicar en Render
 
-El archivo `render.yaml` ya trae la configuración. En Render: **New → Blueprint**, elige este repositorio, escribe `GEMINI_API_KEY` y `ADMIN_PASSWORD` cuando los pida y confirma. Usa el plan `starter` (no se apaga) con un disco de 1 GB montado en `/var/data` para que los manuales subidos no se pierdan.
+El archivo `render.yaml` ya trae la configuración (Python + gunicorn). En Render: **New → Blueprint**, elige este repositorio, escribe `GEMINI_API_KEY` y `ADMIN_PASSWORD` cuando los pida y confirma. Usa el plan `starter` (no se apaga) con un disco de 1 GB montado en `/var/data` para que los manuales subidos no se pierdan.

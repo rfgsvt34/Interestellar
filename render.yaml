@@ -2,17 +2,19 @@
 services:
   - type: web
     name: interestellar
-    runtime: node
+    runtime: python
     # "starter" (de pago) no se apaga por inactividad y permite disco persistente.
     # El plan "free" se duerme tras 15 min sin visitas y borra los archivos subidos.
     plan: starter
-    buildCommand: npm ci
-    startCommand: npm start
+    buildCommand: pip install -r requirements.txt
+    # Un solo proceso (las sesiones y el índice viven en memoria) con varios hilos;
+    # timeout alto porque un diagnóstico con búsqueda web puede tardar.
+    startCommand: gunicorn app:app --workers 1 --threads 8 --timeout 300 --bind 0.0.0.0:$PORT
     healthCheckPath: /api/estado
     autoDeploy: true
     envVars:
-      - key: NODE_VERSION
-        value: "22"
+      - key: PYTHON_VERSION
+        value: "3.12.7"
       - key: DATA_DIR
         value: /var/data
       # Clave gratuita de Google AI Studio (https://aistudio.google.com/apikey)

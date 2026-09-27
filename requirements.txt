@@ -1,0 +1,9 @@
+flask>=3.1
+python-dotenv>=1.0
+pypdf>=5.0
+python-docx>=1.1
+google-genai>=1.0
+# Opcional: solo si usas Claude (Anthropic) en lugar de Gemini
+anthropic>=1.0
+# Solo para publicar en un servidor (Render); en local no hace falta
+gunicorn>=23.0
